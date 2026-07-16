@@ -1,0 +1,80 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Learning Keycloak API!",
+    "description": "This is a API authorization with Keycloak, for me to learn how to use it.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:6701",
+      "description": "Local development"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT access token"
+      }
+    },
+    "schemas": {
+      "ResponseGlobal": {
+        "type": "object",
+        "description": "Envelope response yang dipakai seluruh endpoint.",
+        "properties": {
+          "responseCode": {
+            "type": "integer",
+            "example": 200
+          },
+          "responseMessage": {
+            "type": "string",
+            "example": "The Application Is Running Well"
+          },
+          "data": {
+            "nullable": true,
+            "description": "Payload utama. null bila endpoint tidak mengembalikan data.",
+            "example": null
+          },
+          "error": {
+            "nullable": true,
+            "description": "Detail error. null bila request berhasil.",
+            "example": null
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+    "/": {
+        "get": {
+            "tags": [
+                "Check APP"
+            ],
+            "summary": "Check APP",
+            "description": "Check APP",
+            "operationId": "checkApp",
+            "security": [],
+            "responses": {
+                "200": {
+                    "description": "OK",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResponseGlobal"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+  }
+}

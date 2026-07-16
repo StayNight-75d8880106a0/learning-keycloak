@@ -1,0 +1,118 @@
+services:
+  mysql:
+    image: mysql:9.5.0
+    container_name: auth-mysql
+    restart: unless-stopped
+    ports:
+      - "${MYSQL_PORT_EXPOSE}:${MYSQL_PORT}"
+    environment:
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_CHARSET: ${MYSQL_CHARSET}
+      MYSQL_COLLATION: ${MYSQL_COLLATION}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 11s
+      timeout: 5s
+      retries: 5
+      start_period: 31s
+
+  redis:
+    image: redis:8.6.4
+    container_name: auth-redis
+    restart: always
+    ports:
+      - "${REDIS_PORT_EXPOSE}:${REDIS_PORT}"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_DATABASES: ${REDIS_DATABASES}
+      REDIS_HOST: ${REDIS_HOST}
+    networks:
+      - app_network
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 11s
+      timeout: 6s
+      retries: 7
+
+  learning_keycloak_app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: learning_keycloak:latest
+    container_name: learning_keycloak_app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    env_file:
+      - .env
+    networks:
+      - app_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6.4
+    container_name: keycloak
+    restart: unless-stopped
+    command: start-dev
+    ports:
+      - "${KC_PORT_EXPOSE}:${KC_PORT}"
+    environment:
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_DB: ${KC_DB}
+      KC_DB_URL: "jdbc:mysql://mysql:${MYSQL_PORT}/${MYSQL_DATABASE}"
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000; echo -e 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3; grep -q '\"status\": \"UP\"' <&3"]
+      interval: 11s
+      timeout: 5s
+      retries: 5
+      start_period: 31s
+    networks:
+      - app_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: swagger-ui-golang
+    restart: unless-stopped
+    ports:
+      - "9194:8080"
+    environment:
+      URLS: |
+        [
+          {"url": "/specs/swagger.json", "name": "Learning Keycloak API!"}
+        ]
+      SUPPORTED_SUBMIT_METHODS: '["get","post","put","patch","delete"]'
+    volumes:
+      - ./docs/swagger.json:/usr/share/nginx/html/specs/swagger.json
+    networks:
+      - app_network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  app_network:
+    driver: bridge
