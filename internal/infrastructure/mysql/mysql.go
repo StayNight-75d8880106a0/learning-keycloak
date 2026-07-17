@@ -3,6 +3,7 @@ package mysql
 import (
 	"fmt"
 	"learning-keycloak/internal/config"
+	"learning-keycloak/internal/models"
 	"log"
 	"time"
 
@@ -48,6 +49,12 @@ func NewConnectToMySQL() *MySqlClient {
 	connectToSQLDB.SetMaxIdleConns(26)
 	connectToSQLDB.SetConnMaxLifetime(31 * time.Minute)
 	connectToSQLDB.SetConnMaxIdleTime(11 * time.Minute)
+
+	errMigrate := db.AutoMigrate(&models.User{}, &models.LoginAudit{})
+
+	if errMigrate != nil {
+		panic("Failed To Migrate MySQL!: " + errMigrate.Error())
+	}
 
 	if mySqlClient == nil {
 		mySqlClient = &MySqlClient{

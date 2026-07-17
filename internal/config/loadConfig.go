@@ -47,16 +47,24 @@ func NewRedisConfig() *RedisConfig {
 }
 
 type KeycloakConfig struct {
-	KEYCLOAK_URL           string
-	KEYCLOAK_CLIENT_ID     string
-	KEYCLOAK_CLIENT_SECRET string
+	KEYCLOAK_URL                 string
+	KEYCLOAK_INTERNAL_URL        string
+	KEYCLOAK_CLIENT_ID           string
+	KEYCLOAK_CLIENT_SECRET       string
+	KEYCLOAK_REALM               string
+	KEYCLOAK_ADMIN_CLIENT_ID     string
+	KEYCLOAK_ADMIN_CLIENT_SECRET string
 }
 
 func NewKeycloakConfig() *KeycloakConfig {
 	return &KeycloakConfig{
-		KEYCLOAK_URL:           os.Getenv("KEYCLOAK_URL"),
-		KEYCLOAK_CLIENT_ID:     os.Getenv("KEYCLOAK_CLIENT_ID"),
-		KEYCLOAK_CLIENT_SECRET: os.Getenv("KEYCLOAK_CLIENT_SECRET"),
+		KEYCLOAK_URL:                 os.Getenv("KEYCLOAK_URL"),
+		KEYCLOAK_INTERNAL_URL:        os.Getenv("KEYCLOAK_INTERNAL_URL"),
+		KEYCLOAK_CLIENT_ID:           os.Getenv("KEYCLOAK_CLIENT_ID"),
+		KEYCLOAK_CLIENT_SECRET:       os.Getenv("KEYCLOAK_CLIENT_SECRET"),
+		KEYCLOAK_REALM:               os.Getenv("KEYCLOAK_REALM"),
+		KEYCLOAK_ADMIN_CLIENT_ID:     os.Getenv("KEYCLOAK_ADMIN_CLIENT_ID"),
+		KEYCLOAK_ADMIN_CLIENT_SECRET: os.Getenv("KEYCLOAK_ADMIN_CLIENT_SECRET"),
 	}
 }
 
